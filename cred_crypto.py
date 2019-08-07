@@ -1,3 +1,7 @@
+'''
+    I use this to encrypt database credentials or other small messages for web stuff.
+    Please change the key filename, and set the permissions properly.
+'''
 from cryptography.fernet import Fernet
 import sys
 
@@ -30,8 +34,8 @@ def save_text(text, filename):
         tf.write(text)
 
 
-'''Ensure btext and bkey are type byte and action is encrypt or decrypt.'''
 def cred_crypto(btext, bkey, action):
+    '''Ensure btext and bkey are type byte and action is encrypt or decrypt.'''
     do = Fernet(bkey)
     if action == 'encrypt':
         result = do.encrypt(btext)
