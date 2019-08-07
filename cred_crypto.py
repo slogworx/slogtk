@@ -15,18 +15,11 @@ def new_key():
     return key
 
 
-def load_key(filename):
-    key = ""
-    with open(filename, 'r') as kf:
-        key = kf.read()
-    return key.encode(encoding='utf-8')  # Returns type byte.
-
-
-def get_text(filename):
+def load_text(filename):
     text = ""
     with open(filename, 'r') as tf:
         text = tf.readlines()
-    return ' '.join(text)
+    return ' '.join(text).encode(encoding='utf-8')
 
 
 def save_text(text, filename):
@@ -51,12 +44,12 @@ def main(argv):
     if len(argv) == 2:  # New message, generate a new key.
         key = new_key()
         text = get_text(argv[1])
-        save_text(cred_crypto(text.encode(encoding='utf-8'), key, 'encrypt').decode(encoding='utf-8'), argv[1])
+        save_text(cred_crypto(text, key, 'encrypt').decode(encoding='utf-8'), argv[1])
 
     elif len(argv) == 4:  # Use existing key to encrypt/decrypt.
         key = load_key(argv[2])
         text = get_text(argv[1])
-        save_text(cred_crypto(text.encode(encoding='utf-8'), key, argv[3]).decode(encoding='utf-8'), argv[1])
+        save_text(cred_crypto(text, key, argv[3]).decode(encoding='utf-8'), argv[1])
     else:
         print(f"usage: {argv[0]} txt_filename [key_filename] [action]")
 
