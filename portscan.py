@@ -24,6 +24,7 @@ if __name__ == "__main__":
     if not (len(sys.argv) == 2):
         print(f"usage: {sys.argv[0]} target_address")
     else:
+        answer, no_answer = [], []
         try:
             answer, no_answer = pscan(sys.argv[1])
         except OSError as e:
