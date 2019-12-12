@@ -2,8 +2,7 @@ import hashlib
 import time
 import sys
 
-#TEST_HASH_TO_CRACK = '3a3a5c3f10e14cc9d5e92127a0ee0880'  # password == vjht008
-#TEST_HASH_TO_CRACK = '54d381f9733bede2d0f532654ad9f7d2'  # password == Unicorn69
+TEST_HASH_TO_CRACK = '54d381f9733bede2d0f532654ad9f7d2'  # password == Unicorn69
 
 
 def crack_hash(pw_list, hashed_pw):
