@@ -52,13 +52,14 @@ def purge_files(path_name):
     purge_path.rmdir()
 
 
-# Get current year and month, and return it for dir stucture: /year/month/
+# Get current year and month, and return it for dir stucture: /year/month
+# My security camera stores year/month/day e.g. 2020/03/12/security_cam_file.mp4
 def get_year_month():
     now = datetime.now()
     year = now.strftime('%Y')
     month = now.strftime('%m')
 
-    return '/' + year + '/' + month + '/'
+    return '//' + year + '//' + month
 
 
 # Go back a month
@@ -67,10 +68,17 @@ def rewind_month():
 
 
 def main():
-    # This has to be customized to the dir structure
-    pass
-    # My security camera stores year/month/day e.g. 2020/03/12/security_cam_file.mp4
-
+    # This code has to be customized to the dir structure
+    percent_used = 75
+    purge_paths = (
+        '//home//privatei//driveway', 
+        '//home//privatei//office', 
+        '//home//privatei//living_room'
+    )
+    year_month = get_year_month()
+    if above_threshold(percent_used):
+        for path in purge_paths:
+            current_path = path + year_month
 
 if __name__ == "__main__":
     main()
