@@ -93,7 +93,7 @@ def main():
             print(f'{datetime.now()}: Purging files in {purged_path}.')
             purge_files(purged_path)
     else:
-        print(f'{datetime.now()}: Threshold is accepting. No files purged.')
+        print(f'{datetime.now()}: Threshold is acceptable. No files purged.')
 
 
 if __name__ == "__main__":
