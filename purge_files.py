@@ -1,7 +1,7 @@
 ''' Monitor a directory and remove the oldest files to stay at a specified usage threshold
 
-    I install cron job to check every 20 minutes:
-    */20 * * * * /usr/bin/python3 /path/to/purge_files.py 75 /home/user/watcher > /home/privatei/user/purge_files/purged.log 2>&1
+    I install cron job to check every 15 minutes:
+    */15 * * * * /usr/bin/python3 /path/to/purge_files.py 75 /home/user/watcher >> /home/privatei/user/purge_files/purged.log 2>&1
 '''
 
 from os import statvfs
@@ -37,7 +37,7 @@ def remove_oldest(pathlib_filelist):
             if create_time < file.stat().st_mtime:
                 oldest_file = file
     try:
-        print(f'Removed {oldest_file.as_posix()} from {datetime.fromtimestamp(create_time)}')
+        print(f'{datetime.today().strftime("%m/%d/%Y %I:%M:%S %p")}: Removed {oldest_file.as_posix()} from {datetime.fromtimestamp(create_time).strftime("%m/%d/%Y %I:%M:%S %p")}')
         oldest_file.unlink()
     except Exception:
         print(f'Failed to remove {oldest_file}')
@@ -63,7 +63,7 @@ def main(threshold, monitored_path):
         while above_threshold(threshold):
             pathlib_filelist = recursive_filegrab(monitored_path, EXEMPT_DIRS)
             remove_oldest(pathlib_filelist)
-        print(f'Threshold is acceptable. Purge delayed.')
+        print(f'{datetime.today().strftime("%m/%d/%Y %I:%M:%S %p")}: Threshold is acceptable. Purge delayed.')
     except Exception as e:
         print(e)
 
