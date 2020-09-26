@@ -1,62 +1,56 @@
-''' This is used to delete old security footage when the drive reaches a set capacity.
-    With tweaking, it can also be used to automatically remove old logs, downloads, etc.
-    
+''' Monitor a directory and remove the oldest files to stay at a specified usage threshold
+
     I install cron job to check every 20 minutes:
-    */20 * * * * privatei /usr/bin/python3 /home/slog/purge_files.py > /home/slog/purged.log 2>&1
+    */20 * * * * /usr/bin/python3 /path/to/purge_files.py 75 /home/user/watcher > /home/privatei/user/purge_files/purged.log 2>&1
 '''
 
 from os import statvfs
 from pathlib import Path
 from datetime import datetime
+from sys import argv
+
+EXEMPT_DIRS = 'purge_files'
 
 
-def get_oldest_path(path_name):
-    oldest_time = 0
-    current_time = 0
-    list_path = Path(path_name)
-    oldest_path = ''
-    for child in list_path.glob('*'):
-        if current_time == 0:
-            current_time = child.stat().st_mtime
-            oldest_time = current_time
-            oldest_path = child
-        else: 
-            current_time = child.stat().st_mtime
-            if current_time < oldest_time:
-                oldest_time = current_time
-                oldest_path = child
-    return oldest_path
+def recursive_filegrab(path_string, exempt_dirs):
+    file_list = []
+    monitored_path = Path(path_string)
+    for sub_path in monitored_path.glob('**/*'):
+        if exempt_dirs not in sub_path.parts:
+            if sub_path.is_file():
+                file_list.append(sub_path)
+            elif sub_path.is_dir():
+                if sub_path.as_posix() not in exempt_dirs:
+                    recursive_filegrab(sub_path.as_posix(), exempt_dirs)
+            else:
+                print(sub_path)  # For safety. Is there a non-directory, non-file?
+    return file_list
 
 
-# Get the full path we want to be purging files from and return its str
-# My security camera stores year/month/day e.g. 2020/03/12/security_cam_file.mp4
-# This code has to be modified to work with the specific dir structure
-def get_files_path(purge_path):
-    now = datetime.now()
-    year = now.strftime('%Y')
-    month = now.strftime('%m')
-    return_path = purge_path + '//' + year # usually our path should be from this year, but...
-    oldest_path = get_oldest_path(purge_path)
-    if str(oldest_path) != return_path:
-        return_path = str(get_oldest_path(str(oldest_path)))  # return oldest subdir of oldest_path
-    else:
-        # year is the same, but check the month
-        oldest_path = get_oldest_path(return_path)
-        return_path = return_path + '//' + month
-        if str(oldest_path) != return_path:
-            return_path = str(oldest_path)
-    
-    return return_path
+def remove_oldest(pathlib_filelist):
+    oldest_file = pathlib_filelist[0]
+    for file in pathlib_filelist:
+        create_time = oldest_file.stat().st_mtime
+        if file.stat().st_mtime == create_time:
+            pass
+        else:
+            if create_time < file.stat().st_mtime:
+                oldest_file = file
+    try:
+        print(f'Removed {oldest_file.as_posix()} from {datetime.fromtimestamp(create_time)}')
+        oldest_file.unlink()
+    except Exception:
+        print(f'Failed to remove {oldest_file}')
 
 
-# threshold is an integer representing a percentage 
+# threshold is an integer representing a percentage of disk usage
 # e.g. 75 returns True if > 75% is being used
 def above_threshold(threshold):
-    
+
     percent_used = threshold / 100
     hdd_stats = statvfs('/')
     GB_left = (hdd_stats.f_bavail * hdd_stats.f_frsize) / (1024 * 1000000)  # gigabytes
-    total_GB = (hdd_stats.f_blocks * hdd_stats.f_frsize) / (1024 * 1000000) # gigabytes
+    total_GB = (hdd_stats.f_blocks * hdd_stats.f_frsize) / (1024 * 1000000)  # gigabytes
 
     if (total_GB - GB_left) / total_GB > percent_used:
         return True
@@ -64,37 +58,18 @@ def above_threshold(threshold):
         return False
 
 
-def purge_files(path_name):
-    purge_path = Path(path_name)
-    for child in purge_path.glob('*'):
-        if child.is_file():
-            child.unlink()
-        elif child.is_dir():
-            purge_files(child)
-        else:
-            # Why would this happen? What is not a dir or file?
-            pass
-    purge_path.rmdir()    
-
-
-def main():
-    percent_used = 75  # TODO: pass this via command line
-    purge_paths = (
-        '//home//slog//camera1', 
-        '//home//slog//camera2', 
-        '//home//slog//camera3'
-    )
-    
-    if above_threshold(percent_used):
-        
-        for path in purge_paths:
-            files_path = get_files_path(path)
-            purged_path = get_oldest_path(files_path)
-            print(f'{datetime.now()}: Purging files in {purged_path}.')
-            purge_files(purged_path)
-    else:
-        print(f'{datetime.now()}: Threshold is acceptable. No files purged.')
+def main(threshold, monitored_path):
+    try:
+        while above_threshold(threshold):
+            pathlib_filelist = recursive_filegrab(monitored_path, EXEMPT_DIRS)
+            remove_oldest(pathlib_filelist)
+        print(f'Threshold is acceptable. Purge delayed.')
+    except Exception as e:
+        print(e)
 
 
 if __name__ == "__main__":
-    main()
+    if len(argv) != 3:
+        print('usage: purge_files <threshold> <monitored path>')
+    else:
+        main(int(argv[1]), argv[2])
