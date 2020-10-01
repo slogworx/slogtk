@@ -9,7 +9,7 @@ from pathlib import Path
 from datetime import datetime
 from sys import argv
 
-EXEMPT_DIRS = 'purge_files'
+EXEMPT_DIRS = 'purge_files'  # We don't want to remove our code and logs
 
 
 def recursive_filegrab(path_string, exempt_dirs):
@@ -29,13 +29,11 @@ def recursive_filegrab(path_string, exempt_dirs):
 
 def remove_oldest(pathlib_filelist):
     oldest_file = pathlib_filelist[0]
+    create_time = oldest_file.stat().st_mtime
     for file in pathlib_filelist:
-        create_time = oldest_file.stat().st_mtime
-        if file.stat().st_mtime == create_time:
-            pass
-        else:
-            if create_time < file.stat().st_mtime:
-                oldest_file = file
+        if create_time > file.stat().st_mtime:
+            oldest_file = file
+            create_time = oldest_file.stat().st_mtime
     try:
         print(f'{datetime.today().strftime("%m/%d/%Y %I:%M:%S %p")}: Removed {oldest_file.as_posix()} from {datetime.fromtimestamp(create_time).strftime("%m/%d/%Y %I:%M:%S %p")}')
         oldest_file.unlink()
